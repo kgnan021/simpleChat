@@ -45,12 +45,81 @@ public class EchoServer extends AbstractServer
    * @param msg The message received from the client.
    * @param client The connection from which the message originated.
    */
+  
+  public void handleMessageFromServerUI(String msg) {
+	  String msg1=(String) msg;
+	  if(msg1.contains("#")){
+		  if(msg.equals("#quit")) {
+			System.exit(0);
+		}else if(msg.equals("#stop")){
+			stopListening();
+		}else if(msg.equals("#close")){
+			try {
+				close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}//client disconnected
+		}else if(msg.equals("#start")){
+			if(!(isListening())) {
+				try {
+					listen();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else {
+				System.out.println(" Assuez vous de vous fermer et réessayez.");
+			}
+		
+		}else if(msg.equals("#getport")){
+			System.out.println(getPort());
+		}else {
+		  String ms = msg1.substring(msg1.indexOf("#") + 1, msg1.indexOf(" "));
+		  if(ms.equals("setport")){
+			  String h = msg1.substring(msg1.indexOf("<") + 1, msg1.indexOf(">"));
+			  int p= Integer.parseInt(h); 
+				if(!(isListening())) {
+					setPort(p);
+				}else {
+					System.out.println(" Assuez vous de vous fermer et réessayez.");
+				}
+			} 
+		}
+	}
+	  
+	  sendToAllClients("SERVER MSG>"+msg);
+
+  }
+  
+  
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
+	  String msg1=(String) msg;
+	  if(msg1.contains("#")) {
+		  String ms = msg1.substring(msg1.indexOf("#") + 1, msg1.indexOf(" "));
+		  if(ms.equals("login")) { 
+			  String h = msg1.substring(msg1.indexOf("<") + 1, msg1.indexOf(">"));
+			  int login= Integer.parseInt(h); 
+			  if(client.getInfo("login_id")!=null){
+					 System.out.println(login+" Client déjà connecté"); 
+					 try {
+						close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				 }else { client.setInfo("login_id", login);}
+		  }else if(ms.equals("logoff")) {
+			  clientDisconnected(client);
+		  }
+	  }
     this.sendToAllClients(msg);
+    System.out.println(client.getInfo("login_id")+" Message received: " + msg + " from " + client);
   }
+  
+
     
   /**
    * This method overrides the one in the superclass.  Called
@@ -70,6 +139,16 @@ public class EchoServer extends AbstractServer
   {
     System.out.println
       ("Server has stopped listening for connections.");
+  }
+  
+  public void clientConnected(ConnectionToClient client) {
+	    System.out.println
+	      ("A new client is connected");
+  }
+  
+  public void clientDisconnected(ConnectionToClient client) {
+	  System.out.println
+      ("Login_id<"+client.getInfo("login_id")+"> is disconnected");
   }
   
   //Class methods ***************************************************
